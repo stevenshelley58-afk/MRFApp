@@ -38,7 +38,7 @@ export interface WOMaterialRow extends MasterDataRow {
 }
 
 // Status Types
-export type RequestStatus = 'Requested' | 'Picking' | 'In Transit' | 'Delivered';
+export type RequestStatus = 'Submitted' | 'Requested' | 'Picking' | 'In Transit' | 'Delivered';
 export type Priority = 'High' | 'Medium' | 'Low';
 
 // Configuration Types
@@ -60,3 +60,23 @@ export interface WOConfig {
   summaryCards: SummaryCard[];
   tableColumns: TableConfig;
 }
+
+// Dynamic Request Form
+export type FormFieldType = 'text' | 'textarea' | 'select';
+
+export interface FormFieldDefinition {
+  name: string;
+  label: string;
+  type: FormFieldType;
+  required: boolean;
+  default?: string;
+  options_key?: string; // for selects
+}
+
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
+export type RequestFormConfig = FormFieldDefinition[];
+

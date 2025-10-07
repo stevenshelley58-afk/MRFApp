@@ -3,6 +3,8 @@ import { WOMaterialRow, MaterialRequest, SummaryCard as SummaryCardType } from '
 import { woMaterialsService } from '../../../services/api';
 import Table from '../../../components/ui/Table';
 import SummaryCard from '../../../components/ui/SummaryCard';
+import RequestTray from '../../../components/ui/RequestTray';
+import DynamicRequestForm from '../../../components/ui/DynamicRequestForm';
 
 const WOMaterialView: React.FC = () => {
   const [materials, setMaterials] = useState<WOMaterialRow[]>([]);
@@ -11,6 +13,8 @@ const WOMaterialView: React.FC = () => {
   const [showPackModal, setShowPackModal] = useState(false);
   const [packToDeselect, setPackToDeselect] = useState<string | null>(null);
   const [selectedMRF, setSelectedMRF] = useState<MaterialRequest | null>(null);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [formValues, setFormValues] = useState<Record<string,string>>({});
 
   useEffect(() => {
     // Load data and configuration
@@ -59,6 +63,10 @@ const WOMaterialView: React.FC = () => {
   );
 
   const selectedCount = materials.filter(m => m.isSelected).length;
+  const selectedItemNumbers = materials.filter(m=>m.isSelected).map(m=> m.partNumber);
+
+  const openReview = () => setShowSubmitModal(true);
+  const closeReview = () => setShowSubmitModal(false);
 
   return (
     <div className="space-y-6">
@@ -98,6 +106,9 @@ const WOMaterialView: React.FC = () => {
           onPackDeselect={handlePackDeselect}
         />
       </div>
+
+      {/* Request Tray */}
+      <RequestTray selectedItemNumbers={selectedItemNumbers} onReview={openReview} />
 
       {/* Pack Deselection Confirmation Modal */}
       {showPackModal && packToDeselect && (
@@ -180,6 +191,74 @@ const WOMaterialView: React.FC = () => {
                   <span className="ml-2 text-gray-900">{selectedMRF.packNumber}</span>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Submit Modal */}
+      {showSubmitModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-0 w-full max-w-5xl mx-4 overflow-hidden">
+            <div className="border-b px-6 py-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">New Material Request</h3>
+              <button onClick={closeReview} className="text-gray-400 hover:text-gray-600">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-3">1) Review Your Materials</h4>
+                <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+                  <table className="min-w-full">
+                    <thead className="bg-gray-100 text-gray-600 text-xs uppercase">
+                      <tr>
+                        <th className="px-4 py-2 text-left">Item Number</th>
+                        <th className="px-4 py-2 text-left">Description</th>
+                        <th className="px-4 py-2 text-left">WO Qty</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {materials.filter(m=>m.isSelected).map(row => (
+                        <tr key={`${row.workOrder}-${row.partNumber}`}>
+                          <td className="px-4 py-2">{row.partNumber}</td>
+                          <td className="px-4 py-2">{row.description}</td>
+                          <td className="px-4 py-2">{row.packedQty}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-3">2) Provide Delivery Details</h4>
+                <DynamicRequestForm
+                  config={woMaterialsService.getRequestFormConfig()}
+                  currentUser={{ name: 'Jane Doe', phone: '555-0101' }}
+                  onChange={setFormValues}
+                />
+              </div>
+            </div>
+            <div className="border-t px-6 py-4 flex items-center justify-between">
+              <button onClick={closeReview} className="text-gray-600 hover:text-gray-800">Cancel</button>
+              <button
+                onClick={()=>{
+                  const cfg = woMaterialsService.getRequestFormConfig();
+                  for(const f of cfg){ if(f.required && !formValues[f.name]) { alert(`Please fill ${f.label}`); return; } }
+                  const selected = materials.filter(m=>m.isSelected);
+                  const res = woMaterialsService.submitMaterialRequest(selected, formValues);
+                  // Refresh statuses in grid
+                  const refreshed = woMaterialsService.getWOMaterials();
+                  setMaterials(refreshed);
+                  closeReview();
+                  // simple toast
+                  setTimeout(()=> alert(`✅ Success! Your request ${res.mrfId} has been submitted.`), 0);
+                }}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >Submit Request</button>
             </div>
           </div>
         </div>

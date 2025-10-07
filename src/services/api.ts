@@ -1,4 +1,4 @@
-import { MasterDataRow, MaterialRequest, WOMaterialRow, RequestStatus, WOConfig } from '../types';
+import { MasterDataRow, MaterialRequest, WOMaterialRow, RequestStatus, WOConfig, RequestFormConfig, SelectOption } from '../types';
 
 // Mock data imports (in a real app, these would be API calls)
 import masterDataCsv from '../data/mdtest.csv';
@@ -31,6 +31,27 @@ const parseMasterData = (csvContent: string): MasterDataRow[] => {
 export class WOMaterialsService {
   private masterData: MasterDataRow[];
   private transactionalData: MaterialRequest[];
+  // mock OS settings and lists for dynamic forms
+  private requestFormConfig: RequestFormConfig = [
+    { name: 'DeliverTo', label: 'Deliver To', type: 'select', required: true, options_key: 'DeliveryLocations' },
+    { name: 'RecipientName', label: 'Recipient Name', type: 'text', required: true, default: 'currentUser.name' },
+    { name: 'ContactNumber', label: 'Contact Number', type: 'text', required: true, default: 'currentUser.phone' },
+    { name: 'Priority', label: 'Priority', type: 'select', required: true, options_key: 'RequestPriorities' },
+    { name: 'Comments', label: 'Comments / Special Instructions', type: 'textarea', required: false }
+  ];
+
+  private lists: Record<string, SelectOption[]> = {
+    DeliveryLocations: [
+      { value: 'yard-a', label: 'Yard A' },
+      { value: 'warehouse-1', label: 'Warehouse 1' },
+      { value: 'site-12', label: 'Site 12' },
+    ],
+    RequestPriorities: [
+      { value: 'urgent', label: 'Urgent' },
+      { value: 'high', label: 'High' },
+      { value: 'normal', label: 'Normal' },
+    ],
+  };
 
   constructor() {
     this.masterData = parseMasterData(masterDataCsv);
@@ -68,6 +89,15 @@ export class WOMaterialsService {
     return woConfig as WOConfig;
   }
 
+  // Dynamic request form config and lists
+  getRequestFormConfig(): RequestFormConfig {
+    return this.requestFormConfig;
+  }
+
+  getListByKey(key: string): SelectOption[] {
+    return this.lists[key] || [];
+  }
+
   // Handle pack selection logic
   selectPack(packNumber: string, selectedRows: WOMaterialRow[]): WOMaterialRow[] {
     return selectedRows.map(row => ({
@@ -87,6 +117,32 @@ export class WOMaterialsService {
   // Get material request details by ID
   getMaterialRequestById(mrfId: string): MaterialRequest | undefined {
     return this.transactionalData.find(t => t.id === mrfId);
+  }
+
+  // Submit a new material request (mock). Creates one MRF ID for all selected rows
+  submitMaterialRequest(selected: WOMaterialRow[], _details: Record<string,string>): { mrfId: string } {
+    const mrfId = this.generateMRFId();
+    const now = new Date().toISOString();
+    for (const row of selected) {
+      const entry: MaterialRequest = {
+        id: mrfId,
+        workOrder: row.workOrder,
+        partNumber: row.partNumber,
+        status: 'Submitted' as RequestStatus,
+        requestedAt: now,
+        requestedBy: 'Jane Doe',
+        packNumber: row.stOpPackNumber,
+      };
+      // If an entry already exists for this item, replace it
+      const idx = this.transactionalData.findIndex(t => t.workOrder === entry.workOrder && t.partNumber === entry.partNumber);
+      if (idx >= 0) this.transactionalData[idx] = entry; else this.transactionalData.push(entry);
+    }
+    return { mrfId };
+  }
+
+  private generateMRFId(): string {
+    const num = Math.floor(1000 + Math.random() * 9000);
+    return `MRF-${num}`;
   }
 }
 
