@@ -144,6 +144,34 @@ export class WOMaterialsService {
     const num = Math.floor(1000 + Math.random() * 9000);
     return `MRF-${num}`;
   }
+
+  // Fulfillment APIs (mock)
+  // Return picklist (Submitted only), sorted by MC priority flag DESC then RequiredByTimestamp ASC
+  getPickList(): Array<{
+    id: string;
+    status: string;
+    mcPriorityFlag: boolean;
+    priority: 'P1'|'P2'|'P3'|'P4';
+    items: number;
+    requiredBy: string; // ISO
+    deliveryLocation: string;
+    workOrders: string;
+  }> {
+    // Synthesize from transactionalData + mock
+    const base = [
+      { id:'MRF-1234', status:'Submitted', mcPriorityFlag:false, priority:'P2' as const, items:5, requiredBy:'2025-07-12T11:00:00Z', deliveryLocation:'Warehouse 1', workOrders:'822670' },
+      { id:'MRF-1232', status:'Submitted', mcPriorityFlag:true, priority:'P1' as const, items:2, requiredBy:'2025-07-12T10:30:00Z', deliveryLocation:'Yard A', workOrders:'855798' },
+      { id:'MRF-1198', status:'Submitted', mcPriorityFlag:false, priority:'P4' as const, items:1, requiredBy:'2025-07-12T12:00:00Z', deliveryLocation:'Warehouse 1', workOrders:'857330' },
+    ];
+    return base.sort((a,b)=> (Number(b.mcPriorityFlag) - Number(a.mcPriorityFlag)) || (new Date(a.requiredBy).getTime() - new Date(b.requiredBy).getTime()));
+  }
+
+  startPick(mrfId: string) {
+    const req = this.transactionalData.find(t => t.id === mrfId);
+    if (req) req.status = 'Picking' as RequestStatus;
+    // no-op return
+    return { ok: true };
+  }
 }
 
 // Export singleton instance
