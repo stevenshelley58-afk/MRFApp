@@ -197,6 +197,36 @@ export class WOMaterialsService {
   logPartialPick(lineId: string, qtyPicked: number) { return { ok: true }; }
   flagException(lineId: string, reason: string, comment?: string) { return { ok: true }; }
   stageComplete(mrfId: string) { return { ok: true }; }
+
+  // AC Dashboard APIs
+  getACDashboardData(scopeId: string): {
+    exceptionsCount: number;
+    overdueCount: number;
+    deliveredTodayCount: number;
+    actionQueue: Array<{
+      id: string;
+      status: RequestStatus;
+      priority: 'P1'|'P2'|'P3'|'P4';
+      requestor: string;
+      issue: string;
+      created: string;
+    }>;
+  } {
+    // Mock data for AC dashboard
+    return {
+      exceptionsCount: 3,
+      overdueCount: 2,
+      deliveredTodayCount: 7,
+      actionQueue: [
+        { id:'MRF-1232', status:'Exception', priority:'P1', requestor:'John Smith', issue:'Open Exception', created:'07/12/2025' },
+        { id:'MRF-1235', status:'Submitted', priority:'P2', requestor:'Jane Doe', issue:'Stuck in Queue', created:'06/12/2025' },
+        { id:'MRF-1236', status:'Picking', priority:'P1', requestor:'Bob Wilson', issue:'High Priority', created:'07/12/2025' },
+        { id:'MRF-1237', status:'Exception', priority:'P3', requestor:'Alice Brown', issue:'Open Exception', created:'07/12/2025' },
+      ]
+    };
+  }
+
+  addComment(mrfId: string, comment: string) { return { ok: true }; }
 }
 
 // Export singleton instance

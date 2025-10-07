@@ -7,6 +7,7 @@ import QubePickListView from './features/qube-fulfillment/components/QubePickLis
 import PickingView from './features/qube-fulfillment/components/PickingView';
 import AdminControlPanelView from './features/admin/components/AdminControlPanelView';
 import ExceptionDashboardView from './features/admin/components/ExceptionDashboardView';
+import AreaCoordinatorDashboardView from './features/admin/components/AreaCoordinatorDashboardView';
 
 const App = () => {
   return (
@@ -20,6 +21,7 @@ const App = () => {
           <Route path="/picking" element={<PickingView />} />
           <Route path="/admin" element={<AdminControlPanelView />} />
           <Route path="/exceptions" element={<ExceptionDashboardView />} />
+          <Route path="/ac-dashboard" element={<AreaCoordinatorDashboardView />} />
         </Routes>
       </MainLayout>
     </Router>
