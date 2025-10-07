@@ -1,0 +1,95 @@
+// Color Palette
+$colors: (
+  primary: #3B82F6,
+  primary-light: #60A5FA,
+  primary-dark: #1D4ED8,
+  white: #FFFFFF,
+  gray-50: #F9FAFB,
+  gray-100: #F3F4F6,
+  gray-200: #E5E7EB,
+  gray-300: #D1D5DB,
+  gray-400: #9CA3AF,
+  gray-500: #6B7280,
+  gray-600: #4B5563,
+  gray-700: #374151,
+  gray-800: #1F2937,
+  gray-900: #111827,
+  success: #10B981,
+  warning: #F59E0B,
+  error: #EF4444,
+  info: #3B82F6,
+  status-submitted: #8B5CF6,
+  status-picking: #F59E0B,
+  status-delivered: #10B981,
+  status-closed: #6B7280,
+  status-in-transit: #3B82F6,
+  priority-high: #EF4444,
+  priority-medium: #F59E0B,
+  priority-low: #10B981,
+  priority-normal: #3B82F6,
+  priority-urgent: #DC2626
+);
+
+// Typography
+$font-family-primary: 'Inter', 'Roboto', 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+$font-sizes: (
+  xs: 0.75rem,
+  sm: 0.875rem,
+  base: 1rem,
+  lg: 1.125rem,
+  xl: 1.25rem,
+  2xl: 1.5rem,
+  3xl: 1.875rem,
+  4xl: 2.25rem
+);
+
+$font-weights: (
+  normal: 400,
+  medium: 500,
+  semibold: 600,
+  bold: 700
+);
+
+// Spacing
+$spacing: (
+  0: 0,
+  1: 0.25rem,
+  2: 0.5rem,
+  3: 0.75rem,
+  4: 1rem,
+  5: 1.25rem,
+  6: 1.5rem,
+  8: 2rem,
+  10: 2.5rem,
+  12: 3rem,
+  16: 4rem,
+  20: 5rem,
+  24: 6rem
+);
+
+// Radius
+$border-radius: (
+  none: 0,
+  sm: 0.125rem,
+  base: 0.25rem,
+  md: 0.375rem,
+  lg: 0.5rem,
+  xl: 0.75rem,
+  full: 9999px
+);
+
+// Shadows
+$shadows: (
+  sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05),
+  base: 0 1px 3px 0 rgba(0, 0, 0, 0.1),
+  md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+  lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+  xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1)
+);
+
+// Layout
+$sidebar-width: 16rem;
+$header-height: 4rem;
+$container-max-width: 1200px;
+
+

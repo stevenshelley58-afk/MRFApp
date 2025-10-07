@@ -1,0 +1,4 @@
+.container { max-width: $container-max-width; margin: 0 auto; padding: 0 map-get($spacing, 6); }
+.card { @include card; }
+
+

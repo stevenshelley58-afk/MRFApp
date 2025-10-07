@@ -1,0 +1,9 @@
+.status-pill { @include status-pill(map-get($colors, gray-100), map-get($colors, gray-800)); }
+.status-pill--submitted { @include status-pill(map-get($colors, status-submitted), map-get($colors, white)); }
+.status-pill--picking { @include status-pill(map-get($colors, status-picking), map-get($colors, white)); }
+.status-pill--delivered { @include status-pill(map-get($colors, status-delivered), map-get($colors, white)); }
+.status-pill--closed { @include status-pill(map-get($colors, status-closed), map-get($colors, white)); }
+.status-pill--in-transit { @include status-pill(map-get($colors, status-in-transit), map-get($colors, white)); }
+.status-pill--clickable { cursor: pointer; &:hover { opacity: .85; } }
+
+

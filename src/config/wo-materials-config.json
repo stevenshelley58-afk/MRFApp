@@ -1,0 +1,34 @@
+{
+  "summaryCards": [
+    {
+      "id": "open-requests",
+      "title": "My Open Requests",
+      "value": "12",
+      "color": "blue",
+      "icon": "clock"
+    },
+    {
+      "id": "delivered-requests",
+      "title": "My Delivered Requests",
+      "value": "35",
+      "color": "green",
+      "icon": "check"
+    }
+  ],
+  "tableColumns": {
+    "defaultVisible": [
+      "Work Order",
+      "Part Number", 
+      "Description",
+      "Packed Qty",
+      "Unit",
+      "ST/OP Pack Number",
+      "Location",
+      "Priority",
+      "Category",
+      "MRF Status"
+    ],
+    "reorderable": true,
+    "hideable": true
+  }
+}

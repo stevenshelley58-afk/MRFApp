@@ -1,0 +1,11 @@
+Work Order,Part Number,Description,Packed Qty,Unit,ST/OP Pack Number,Location,Priority,Category,Last Updated
+WO-001,PN-12345,Gasket - High Pressure,10,EA,000119570008075432,A-1-2,High,Mechanical,2024-01-15
+WO-001,PN-12346,Bolt - M12x50,25,EA,000119570008075432,A-1-2,High,Mechanical,2024-01-15
+WO-001,PN-12347,Washer - Flat,50,EA,000119570008075432,A-1-2,High,Mechanical,2024-01-15
+WO-002,PN-12348,O-Ring - Viton,5,EA,000119570008075433,B-2-1,Medium,Sealing,2024-01-16
+WO-002,PN-12349,Gasket - Low Pressure,15,EA,000119570008075433,B-2-1,Medium,Sealing,2024-01-16
+WO-003,PN-12350,Bearing - Ball,2,EA,,C-3-1,Low,Mechanical,2024-01-17
+WO-003,PN-12351,Grease - Synthetic,1,TUBE,,C-3-1,Low,Lubrication,2024-01-17
+WO-004,PN-12352,Cable - Power,100,FT,000119570008075434,D-4-2,High,Electrical,2024-01-18
+WO-004,PN-12353,Connector - RJ45,20,EA,000119570008075434,D-4-2,High,Electrical,2024-01-18
+WO-005,PN-12354,Filter - Air,3,EA,,E-5-1,Medium,Filtration,2024-01-19

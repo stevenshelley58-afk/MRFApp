@@ -1,0 +1,38 @@
+[
+  {
+    "id": "MRF-001",
+    "workOrder": "WO-001",
+    "partNumber": "PN-12345",
+    "status": "In Transit",
+    "requestedAt": "2024-01-20T10:30:00Z",
+    "requestedBy": "John Smith",
+    "packNumber": "000119570008075432"
+  },
+  {
+    "id": "MRF-002",
+    "workOrder": "WO-001",
+    "partNumber": "PN-12346",
+    "status": "In Transit",
+    "requestedAt": "2024-01-20T10:30:00Z",
+    "requestedBy": "John Smith",
+    "packNumber": "000119570008075432"
+  },
+  {
+    "id": "MRF-003",
+    "workOrder": "WO-002",
+    "partNumber": "PN-12348",
+    "status": "Delivered",
+    "requestedAt": "2024-01-19T14:15:00Z",
+    "requestedBy": "Jane Doe",
+    "packNumber": "000119570008075433"
+  },
+  {
+    "id": "MRF-004",
+    "workOrder": "WO-003",
+    "partNumber": "PN-12350",
+    "status": "Picking",
+    "requestedAt": "2024-01-21T09:45:00Z",
+    "requestedBy": "Mike Johnson",
+    "packNumber": null
+  }
+]

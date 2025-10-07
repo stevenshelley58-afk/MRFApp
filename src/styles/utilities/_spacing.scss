@@ -1,0 +1,14 @@
+@each $k, $v in $spacing {
+  .p-#{$k} { padding: $v; }
+  .m-#{$k} { margin: $v; }
+  .pt-#{$k} { padding-top: $v; }
+  .pb-#{$k} { padding-bottom: $v; }
+  .pl-#{$k} { padding-left: $v; }
+  .pr-#{$k} { padding-right: $v; }
+  .mt-#{$k} { margin-top: $v; }
+  .mb-#{$k} { margin-bottom: $v; }
+  .ml-#{$k} { margin-left: $v; }
+  .mr-#{$k} { margin-right: $v; }
+}
+
+

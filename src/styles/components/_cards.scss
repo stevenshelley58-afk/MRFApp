@@ -1,0 +1,11 @@
+.card--summary {
+  @include card;
+  display: flex; align-items: center; justify-content: space-between;
+  .card-content {
+    .card-title { font-size: map-get($font-sizes, sm); font-weight: map-get($font-weights, medium); color: map-get($colors, gray-600); margin-bottom: map-get($spacing, 1); }
+    .card-value { font-size: map-get($font-sizes, 3xl); font-weight: map-get($font-weights, bold); color: map-get($colors, gray-900); }
+  }
+  .card-icon { width: map-get($spacing, 12); height: map-get($spacing, 12); background: map-get($colors, gray-50); border-radius: map-get($border-radius, full); display: flex; align-items: center; justify-content: center; }
+}
+
+
