@@ -35,10 +35,17 @@ export interface WOMaterialRow extends MasterDataRow {
   mrfStatus: string;
   mrfId?: string;
   isSelected: boolean;
+  pKey?: string;
 }
 
 // Status Types
-export type RequestStatus = 'Submitted' | 'Requested' | 'Picking' | 'In Transit' | 'Delivered';
+export type RequestStatus =
+  | 'Submitted'
+  | 'Picking'
+  | 'In Transit'
+  | 'Ready for Collection'
+  | 'Delivered'
+  | 'Exception';
 export type Priority = 'High' | 'Medium' | 'Low';
 
 // Configuration Types
