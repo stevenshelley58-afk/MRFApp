@@ -1,15 +1,29 @@
 import React from 'react';
 import { WOMaterialRow } from '../../types';
 import StatusPill from './StatusPill';
+import FilterDropdown from './FilterDropdown';
 
 interface TableProps {
   data: WOMaterialRow[];
   onRowSelect: (index: number) => void;
   onMRFClick: (mrfId: string) => void;
   onPackDeselect: (packNumber: string) => void;
+  onFilterChange?: (filters: Record<string, string[] | null>, sort?: { column: string; dir: 'asc'|'desc' }) => void;
 }
 
-const Table: React.FC<TableProps> = ({ data, onRowSelect, onMRFClick, onPackDeselect }) => {
+const Table: React.FC<TableProps> = ({ data, onRowSelect, onMRFClick, onPackDeselect, onFilterChange }) => {
+  const [activeFilters, setActiveFilters] = React.useState<Record<string, string[]|null>>({});
+
+  const unique = (getter: (r: WOMaterialRow)=> string) => {
+    return Array.from(new Set(data.map(getter).filter(Boolean)));
+  };
+
+  const applyFilter = (column: string, selected: string[]|null, sort?: 'asc'|'desc') => {
+    const next = { ...activeFilters, [column]: selected };
+    setActiveFilters(next);
+    if (onFilterChange && sort) onFilterChange(next, { column, dir: sort });
+    else if (onFilterChange) onFilterChange(next, undefined as any);
+  };
   const handleRowClick = (index: number, row: WOMaterialRow) => {
     // If this row has a pack number and is being selected, select the whole pack
     if (!row.isSelected && row.stOpPackNumber) {
@@ -37,10 +51,24 @@ const Table: React.FC<TableProps> = ({ data, onRowSelect, onMRFClick, onPackDese
               Select
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Work Order
+              <div className="flex items-center gap-2">
+                <span>Work Order</span>
+                <FilterDropdown
+                  values={unique(r=> r.workOrder)}
+                  onApply={(sel, sort)=> applyFilter('workOrder', sel, sort)}
+                  isActive={!!activeFilters['workOrder']}
+                />
+              </div>
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Part Number
+              <div className="flex items-center gap-2">
+                <span>Part Number</span>
+                <FilterDropdown
+                  values={unique(r=> r.partNumber)}
+                  onApply={(sel, sort)=> applyFilter('partNumber', sel, sort)}
+                  isActive={!!activeFilters['partNumber']}
+                />
+              </div>
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Description
@@ -55,7 +83,14 @@ const Table: React.FC<TableProps> = ({ data, onRowSelect, onMRFClick, onPackDese
               ST/OP Pack Number
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Location
+              <div className="flex items-center gap-2">
+                <span>Location</span>
+                <FilterDropdown
+                  values={unique(r=> r.location)}
+                  onApply={(sel, sort)=> applyFilter('location', sel, sort)}
+                  isActive={!!activeFilters['location']}
+                />
+              </div>
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Priority

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import DonutChart from '../../../components/ui/DonutChart';
+import FilterDropdown from '../../../components/ui/FilterDropdown';
 import StatusPill from '../../../components/ui/StatusPill';
 
 type MRFStatus = 'Submitted' | 'Picking' | 'Ready for Collection' | 'In Transit' | 'Exception' | 'Delivered';
@@ -14,6 +15,7 @@ const seed: MRFRow[] = [
 
 const MaterialRequestView: React.FC = () => {
   const [filter, setFilter] = useState<'All'|MRFStatus|'Exceptions'>('All');
+  const [columnFilters, setColumnFilters] = useState<Record<string,string[]|null>>({});
   const [openPanel, setOpenPanel] = useState<MRFRow|null>(null);
 
   const data = seed;
@@ -22,10 +24,16 @@ const MaterialRequestView: React.FC = () => {
   }),[]);
 
   const filtered = useMemo(()=>{
-    if(filter==='All') return data;
-    if(filter==='Exceptions') return data.filter(d=> d.status==='Exception');
-    return data.filter(d=> d.status===filter);
-  },[filter,data]);
+    let rows = data;
+    if(filter!=='All') rows = filter==='Exceptions' ? rows.filter(d=> d.status==='Exception') : rows.filter(d=> d.status===filter);
+    const apply = (col: string, get: (r:MRFRow)=>string) => {
+      const act = columnFilters[col]; if(!act) return rows; return rows.filter(r=> act.includes(get(r)));
+    };
+    rows = apply('status', r=> r.status);
+    rows = apply('priority', r=> r.priority);
+    rows = apply('workOrders', r=> r.workOrders);
+    return rows;
+  },[filter,data,columnFilters]);
 
   const segments = [
     { label:'Submitted', value: counts.Submitted, color:'#6366f1' },
@@ -74,10 +82,25 @@ const MaterialRequestView: React.FC = () => {
           <thead className="bg-gray-100 text-xs uppercase text-gray-600">
             <tr>
               <th className="px-4 py-2 text-left">Request ID</th>
-              <th className="px-4 py-2 text-left">Status</th>
-              <th className="px-4 py-2 text-left">Priority</th>
+              <th className="px-4 py-2 text-left">
+                <div className="flex items-center gap-2">
+                  <span>Status</span>
+                  <FilterDropdown values={Array.from(new Set(data.map(d=> d.status)))} onApply={(sel)=> setColumnFilters(f=> ({...f, status: sel}))} isActive={!!columnFilters.status} />
+                </div>
+              </th>
+              <th className="px-4 py-2 text-left">
+                <div className="flex items-center gap-2">
+                  <span>Priority</span>
+                  <FilterDropdown values={Array.from(new Set(data.map(d=> d.priority)))} onApply={(sel)=> setColumnFilters(f=> ({...f, priority: sel}))} isActive={!!columnFilters.priority} />
+                </div>
+              </th>
               <th className="px-4 py-2 text-left"># of Items</th>
-              <th className="px-4 py-2 text-left">Work Order(s)</th>
+              <th className="px-4 py-2 text-left">
+                <div className="flex items-center gap-2">
+                  <span>Work Order(s)</span>
+                  <FilterDropdown values={Array.from(new Set(data.map(d=> d.workOrders)))} onApply={(sel)=> setColumnFilters(f=> ({...f, workOrders: sel}))} isActive={!!columnFilters.workOrders} />
+                </div>
+              </th>
               <th className="px-4 py-2 text-left">Created Date</th>
               <th className="px-4 py-2 text-left">Actions</th>
             </tr>
