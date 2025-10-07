@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { WOMaterialRow, MaterialRequest, SummaryCard as SummaryCardType } from '../../../types';
 import { woMaterialsService } from '../../../services/api';
-import Table from '../../../components/ui/Table';
+import SmartTable, { SmartTableColumn } from '../../../components/ui/SmartTable';
 import SummaryCard from '../../../components/ui/SummaryCard';
 import RequestTray from '../../../components/ui/RequestTray';
 import DynamicRequestForm from '../../../components/ui/DynamicRequestForm';
@@ -56,23 +56,29 @@ const WOMaterialView: React.FC = () => {
     setSelectedMRF(mrf || null);
   };
 
-  const [columnFilters, setColumnFilters] = useState<Record<string, string[]|null>>({});
   const filteredMaterials = materials.filter(material => {
-    const cmp = (col: string, val: string) => {
-      const active = columnFilters[col];
-      if (!active || active.length === 0) return true;
-      return active.includes(val);
-    };
     const text = searchTerm.toLowerCase();
-    const textMatch =
+    return (
       material.workOrder.toLowerCase().includes(text) ||
       material.partNumber.toLowerCase().includes(text) ||
-      material.description.toLowerCase().includes(text);
-    return cmp('workOrder', material.workOrder) &&
-      cmp('partNumber', material.partNumber) &&
-      cmp('location', material.location) &&
-      textMatch;
+      material.description.toLowerCase().includes(text)
+    );
   });
+
+  const columns: SmartTableColumn<typeof materials[number]>[] = [
+    { accessorKey:'workOrder', header:'Work Order', filterable:true },
+    { accessorKey:'partNumber', header:'Part Number', filterable:true },
+    { accessorKey:'description', header:'Description', filterable:true },
+    { accessorKey:'packedQty', header:'WO Qty' },
+    { accessorKey:'unit', header:'Unit' },
+    { accessorKey:'stOpPackNumber', header:'ST/OP Pack Number', filterable:true },
+    { accessorKey:'location', header:'Location', filterable:true },
+    { accessorKey:'priority', header:'Priority', filterable:true },
+    { accessorKey:'category', header:'Category', filterable:true },
+    { accessorKey:'mrfStatus', header:'MRF Status', cell:(r)=> (
+      <span>{r.mrfStatus}</span>
+    ) },
+  ];
 
   const selectedCount = materials.filter(m => m.isSelected).length;
   const selectedItemNumbers = materials.filter(m=>m.isSelected).map(m=> m.partNumber);
@@ -111,12 +117,13 @@ const WOMaterialView: React.FC = () => {
 
       {/* Data Grid */}
       <div className="bg-white rounded-lg shadow-sm">
-        <Table
+        <SmartTable
+          tableId="wo-materials"
           data={filteredMaterials}
-          onRowSelect={handleRowSelect}
-          onMRFClick={handleMRFClick}
-          onPackDeselect={handlePackDeselect}
-          onFilterChange={(filters)=> setColumnFilters(filters)}
+          columns={columns}
+          enableSelection
+          onSelectionChange={() => { /* handled via our own checkboxes earlier; integrating next */ }}
+          onRowClick={()=>{}}
         />
       </div>
 

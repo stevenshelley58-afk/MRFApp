@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import DonutChart from '../../../components/ui/DonutChart';
-import FilterDropdown from '../../../components/ui/FilterDropdown';
+import SmartTable, { SmartTableColumn } from '../../../components/ui/SmartTable';
 import StatusPill from '../../../components/ui/StatusPill';
 
 type MRFStatus = 'Submitted' | 'Picking' | 'Ready for Collection' | 'In Transit' | 'Exception' | 'Delivered';
@@ -15,7 +15,6 @@ const seed: MRFRow[] = [
 
 const MaterialRequestView: React.FC = () => {
   const [filter, setFilter] = useState<'All'|MRFStatus|'Exceptions'>('All');
-  const [columnFilters, setColumnFilters] = useState<Record<string,string[]|null>>({});
   const [openPanel, setOpenPanel] = useState<MRFRow|null>(null);
 
   const data = seed;
@@ -26,14 +25,26 @@ const MaterialRequestView: React.FC = () => {
   const filtered = useMemo(()=>{
     let rows = data;
     if(filter!=='All') rows = filter==='Exceptions' ? rows.filter(d=> d.status==='Exception') : rows.filter(d=> d.status===filter);
-    const apply = (col: string, get: (r:MRFRow)=>string) => {
-      const act = columnFilters[col]; if(!act) return rows; return rows.filter(r=> act.includes(get(r)));
-    };
-    rows = apply('status', r=> r.status);
-    rows = apply('priority', r=> r.priority);
-    rows = apply('workOrders', r=> r.workOrders);
     return rows;
-  },[filter,data,columnFilters]);
+  },[filter,data]);
+
+  const columns: SmartTableColumn<MRFRow>[] = [
+    { accessorKey:'id', header:'Request ID' },
+    { accessorKey:'status', header:'Status', filterable:true, cell:(r)=> <StatusPill status={r.status} /> },
+    { accessorKey:'priority', header:'Priority', filterable:true, cell:(r)=> (
+      <span className={`px-2 py-0.5 rounded text-xs font-semibold ${r.priority==='P1'?'bg-red-100 text-red-800':r.priority==='P2'?'bg-yellow-100 text-yellow-800':'bg-gray-100 text-gray-800'}`}>{r.priority}</span>
+    ) },
+    { accessorKey:'items', header:'# of Items' },
+    { accessorKey:'workOrders', header:'Work Order(s)', filterable:true },
+    { accessorKey:'created', header:'Created Date' },
+    { accessorKey:'actions', header:'Actions', cell:(r)=> (
+      r.status==='Delivered' ? (
+        <button className="px-3 py-1.5 rounded-md bg-green-600 text-white" onClick={(e)=>{ e.stopPropagation(); setOpenPanel(r); }}>📄 View POD</button>
+      ) : (
+        <button className="px-3 py-1.5 rounded-md border bg-white text-gray-700 border-gray-300" onClick={(e)=>{ e.stopPropagation(); setOpenPanel(r); }}>View</button>
+      )
+    ) },
+  ];
 
   const segments = [
     { label:'Submitted', value: counts.Submitted, color:'#6366f1' },
@@ -77,57 +88,12 @@ const MaterialRequestView: React.FC = () => {
       </div>
 
       {/* Master Request List */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <table className="min-w-full">
-          <thead className="bg-gray-100 text-xs uppercase text-gray-600">
-            <tr>
-              <th className="px-4 py-2 text-left">Request ID</th>
-              <th className="px-4 py-2 text-left">
-                <div className="flex items-center gap-2">
-                  <span>Status</span>
-                  <FilterDropdown values={Array.from(new Set(data.map(d=> d.status)))} onApply={(sel)=> setColumnFilters(f=> ({...f, status: sel}))} isActive={!!columnFilters.status} />
-                </div>
-              </th>
-              <th className="px-4 py-2 text-left">
-                <div className="flex items-center gap-2">
-                  <span>Priority</span>
-                  <FilterDropdown values={Array.from(new Set(data.map(d=> d.priority)))} onApply={(sel)=> setColumnFilters(f=> ({...f, priority: sel}))} isActive={!!columnFilters.priority} />
-                </div>
-              </th>
-              <th className="px-4 py-2 text-left"># of Items</th>
-              <th className="px-4 py-2 text-left">
-                <div className="flex items-center gap-2">
-                  <span>Work Order(s)</span>
-                  <FilterDropdown values={Array.from(new Set(data.map(d=> d.workOrders)))} onApply={(sel)=> setColumnFilters(f=> ({...f, workOrders: sel}))} isActive={!!columnFilters.workOrders} />
-                </div>
-              </th>
-              <th className="px-4 py-2 text-left">Created Date</th>
-              <th className="px-4 py-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {filtered.map(row => (
-              <tr key={row.id} className="hover:bg-gray-50 cursor-pointer" onClick={()=> setOpenPanel(row)}>
-                <td className="px-4 py-2 text-blue-700 font-semibold">{row.id}</td>
-                <td className="px-4 py-2"><StatusPill status={row.status} /></td>
-                <td className="px-4 py-2">
-                  <span className={`px-2 py-0.5 rounded text-xs font-semibold ${row.priority==='P1'?'bg-red-100 text-red-800':row.priority==='P2'?'bg-yellow-100 text-yellow-800':'bg-gray-100 text-gray-800'}`}>{row.priority}</span>
-                </td>
-                <td className="px-4 py-2">{row.items}</td>
-                <td className="px-4 py-2">{row.workOrders}</td>
-                <td className="px-4 py-2">{row.created}</td>
-                <td className="px-4 py-2">
-                  {row.status==='Delivered' ? (
-                    <button className="px-3 py-1.5 rounded-md bg-green-600 text-white" onClick={(e)=>{ e.stopPropagation(); setOpenPanel(row); }}>📄 View POD</button>
-                  ) : (
-                    <button className="px-3 py-1.5 rounded-md border bg-white text-gray-700 border-gray-300" onClick={(e)=>{ e.stopPropagation(); setOpenPanel(row); }}>View</button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <SmartTable
+        tableId="material-requests"
+        data={filtered}
+        columns={columns}
+        onRowClick={(r)=> setOpenPanel(r)}
+      />
 
       {/* Detail Panel */}
       {openPanel && (
