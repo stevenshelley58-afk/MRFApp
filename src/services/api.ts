@@ -227,6 +227,65 @@ export class WOMaterialsService {
   }
 
   addComment(mrfId: string, comment: string) { return { ok: true }; }
+
+  // AC Scope Control APIs
+  getACScopeData(scopeId: string): {
+    exceptionsCount: number;
+    queuePosition: {
+      totalInQueue: number;
+      highestPriority: { id: string; position: number };
+      nextToPick: { id: string; position: number };
+    };
+    lockedMaterialsCount: number;
+    priorityQueue: Array<{
+      id: string;
+      requestor: string;
+      items: number;
+      created: string;
+      acPriorityScore: number;
+    }>;
+    allScopeRequests: Array<{
+      id: string;
+      status: RequestStatus;
+      priority: 'P1'|'P2'|'P3'|'P4';
+      requestor: string;
+      items: number;
+      created: string;
+    }>;
+  } {
+    return {
+      exceptionsCount: 3,
+      queuePosition: {
+        totalInQueue: 8,
+        highestPriority: { id: 'MRF-1232', position: 2 },
+        nextToPick: { id: 'MRF-1235', position: 7 }
+      },
+      lockedMaterialsCount: 5,
+      priorityQueue: [
+        { id: 'MRF-1232', requestor: 'John Smith', items: 3, created: '07/12/2025', acPriorityScore: 1 },
+        { id: 'MRF-1235', requestor: 'Jane Doe', items: 2, created: '06/12/2025', acPriorityScore: 2 },
+        { id: 'MRF-1236', requestor: 'Bob Wilson', items: 4, created: '07/12/2025', acPriorityScore: 3 },
+      ],
+      allScopeRequests: [
+        { id: 'MRF-1232', status: 'Submitted', priority: 'P1', requestor: 'John Smith', items: 3, created: '07/12/2025' },
+        { id: 'MRF-1235', status: 'Submitted', priority: 'P2', requestor: 'Jane Doe', items: 2, created: '06/12/2025' },
+        { id: 'MRF-1236', status: 'Picking', priority: 'P1', requestor: 'Bob Wilson', items: 4, created: '07/12/2025' },
+        { id: 'MRF-1237', status: 'Exception', priority: 'P3', requestor: 'Alice Brown', items: 1, created: '07/12/2025' },
+        { id: 'MRF-1238', status: 'Delivered', priority: 'P4', requestor: 'Charlie Davis', items: 2, created: '05/12/2025' },
+      ]
+    };
+  }
+
+  updateACPriorityOrder(mrfIds: string[]) { return { ok: true }; }
+
+  lockMaterial(pKey: string, comment: string) { return { ok: true }; }
+  unlockMaterial(pKey: string) { return { ok: true }; }
+  getLockedMaterials(): Array<{ pKey: string; lockedBy: string; comment: string; materialDescription: string }> {
+    return [
+      { pKey: '8226706300', lockedBy: 'Steve', comment: 'Reserved for critical path job on Friday', materialDescription: '10-inch Steel Pipe' },
+      { pKey: '822670600', lockedBy: 'Sarah', comment: 'Emergency backup for Unit 3', materialDescription: 'Gate Valve' },
+    ];
+  }
 }
 
 // Export singleton instance

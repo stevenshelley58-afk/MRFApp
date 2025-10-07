@@ -65,6 +65,25 @@ const WOMaterialView: React.FC = () => {
     );
   });
 
+  const handleLockMaterial = (pKey: string) => {
+    const comment = prompt('Enter reason for locking this material:');
+    if (comment && comment.trim()) {
+      woMaterialsService.lockMaterial(pKey, comment.trim());
+      // Refresh materials to show locked status
+      const updatedData = woMaterialsService.getWOMaterials();
+      setMaterials(updatedData);
+    }
+  };
+
+  const handleUnlockMaterial = (pKey: string) => {
+    if (window.confirm('Are you sure you want to unlock this material?')) {
+      woMaterialsService.unlockMaterial(pKey);
+      // Refresh materials to show unlocked status
+      const updatedData = woMaterialsService.getWOMaterials();
+      setMaterials(updatedData);
+    }
+  };
+
   const columns: SmartTableColumn<typeof materials[number]>[] = [
     { accessorKey:'workOrder', header:'Work Order', filterable:true },
     { accessorKey:'partNumber', header:'Part Number', filterable:true },
@@ -78,6 +97,38 @@ const WOMaterialView: React.FC = () => {
     { accessorKey:'mrfStatus', header:'MRF Status', cell:(r)=> (
       <span>{r.mrfStatus}</span>
     ) },
+    {
+      accessorKey: 'actions',
+      header: 'Actions',
+      cell: (row) => (
+        <div className="relative">
+          <button className="text-gray-400 hover:text-gray-600">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+            </svg>
+          </button>
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
+            <div className="py-1">
+              {row.mrfStatus === 'Not Requested' ? (
+                <button
+                  onClick={() => handleLockMaterial(row.pKey || `${row.workOrder}-${row.partNumber}`)}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  🔒 Lock Material
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleUnlockMaterial(row.pKey || `${row.workOrder}-${row.partNumber}`)}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  🔓 Unlock Material
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )
+    }
   ];
 
   const selectedCount = materials.filter(m => m.isSelected).length;

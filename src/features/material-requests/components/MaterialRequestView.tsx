@@ -16,6 +16,7 @@ const seed: MRFRow[] = [
 const MaterialRequestView: React.FC = () => {
   const [filter, setFilter] = useState<'All'|MRFStatus|'Exceptions'>('All');
   const [openPanel, setOpenPanel] = useState<MRFRow|null>(null);
+  const [userRole, setUserRole] = useState<'Requestor' | 'AC' | 'MC'>('AC'); // Mock user role
 
   const data = seed;
   const counts = useMemo(()=>({
@@ -104,7 +105,7 @@ const MaterialRequestView: React.FC = () => {
               <StatusPill status={openPanel.status} />
             </div>
             <div className="px-6 py-4 flex items-center gap-2 border-b">
-              {openPanel.status==='Submitted' && (
+              {openPanel.status==='Submitted' && (userRole === 'AC' || userRole === 'MC') && (
                 <>
                   <button className="px-3 py-1.5 rounded-md border bg-white text-gray-700 border-gray-300">✏️ Edit Request</button>
                   <button className="px-3 py-1.5 rounded-md border bg-white text-gray-700 border-gray-300">🗑️ Delete Request</button>

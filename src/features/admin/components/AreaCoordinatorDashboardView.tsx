@@ -4,36 +4,78 @@ import SmartTable, { SmartTableColumn } from '../../../components/ui/SmartTable'
 import StatusPill from '../../../components/ui/StatusPill';
 import { woMaterialsService } from '../../../services/api';
 
-interface ActionQueueItem {
+interface PriorityQueueItem {
+  id: string;
+  requestor: string;
+  items: number;
+  created: string;
+  acPriorityScore: number;
+}
+
+interface ScopeRequestItem {
   id: string;
   status: 'Submitted' | 'Picking' | 'Ready for Collection' | 'In Transit' | 'Exception' | 'Delivered';
   priority: 'P1'|'P2'|'P3'|'P4';
   requestor: string;
-  issue: string;
+  items: number;
   created: string;
 }
 
-interface DashboardData {
+interface ScopeData {
   exceptionsCount: number;
-  overdueCount: number;
-  deliveredTodayCount: number;
-  actionQueue: ActionQueueItem[];
+  queuePosition: {
+    totalInQueue: number;
+    highestPriority: { id: string; position: number };
+    nextToPick: { id: string; position: number };
+  };
+  lockedMaterialsCount: number;
+  priorityQueue: PriorityQueueItem[];
+  allScopeRequests: ScopeRequestItem[];
 }
 
 const AreaCoordinatorDashboardView: React.FC = () => {
   const navigate = useNavigate();
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [selectedRequest, setSelectedRequest] = useState<ActionQueueItem | null>(null);
+  const [scopeData, setScopeData] = useState<ScopeData | null>(null);
+  const [activeTab, setActiveTab] = useState<'priority' | 'all'>('priority');
+  const [selectedRequest, setSelectedRequest] = useState<ScopeRequestItem | null>(null);
   const [comment, setComment] = useState('');
+  const [showLockedModal, setShowLockedModal] = useState(false);
 
   useEffect(() => {
-    // Mock scope ID - in real app this would come from user context
     const scopeId = 'welding-scope';
-    const data = woMaterialsService.getACDashboardData(scopeId);
-    setDashboardData(data);
+    const data = woMaterialsService.getACScopeData(scopeId);
+    setScopeData(data);
   }, []);
 
-  const columns: SmartTableColumn<ActionQueueItem>[] = [
+  const handleCardClick = (filter: string) => {
+    navigate(`/requests?filter=${filter}`);
+  };
+
+  const handleLockedMaterialsClick = () => {
+    setShowLockedModal(true);
+  };
+
+  const handleAddComment = () => {
+    if (selectedRequest && comment.trim()) {
+      woMaterialsService.addComment(selectedRequest.id, comment);
+      setComment('');
+      setSelectedRequest(null);
+      // Refresh scope data
+      const scopeId = 'welding-scope';
+      const data = woMaterialsService.getACScopeData(scopeId);
+      setScopeData(data);
+    }
+  };
+
+  const priorityQueueColumns: SmartTableColumn<PriorityQueueItem>[] = [
+    { accessorKey: 'id', header: 'Request ID' },
+    { accessorKey: 'requestor', header: 'Requestor' },
+    { accessorKey: 'items', header: '# Items' },
+    { accessorKey: 'created', header: 'Created Date' },
+    { accessorKey: 'acPriorityScore', header: 'Priority Order' },
+  ];
+
+  const allRequestsColumns: SmartTableColumn<ScopeRequestItem>[] = [
     { accessorKey: 'id', header: 'Request ID' },
     { accessorKey: 'status', header: 'Status', cell: (r) => <StatusPill status={r.status} /> },
     { accessorKey: 'priority', header: 'Priority', cell: (r) => (
@@ -46,35 +88,11 @@ const AreaCoordinatorDashboardView: React.FC = () => {
       </span>
     ) },
     { accessorKey: 'requestor', header: 'Requestor' },
-    { accessorKey: 'issue', header: 'Issue', cell: (r) => (
-      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-        r.issue === 'Open Exception' ? 'bg-yellow-100 text-yellow-800' :
-        r.issue === 'Stuck in Queue' ? 'bg-orange-100 text-orange-800' :
-        'bg-blue-100 text-blue-800'
-      }`}>
-        {r.issue}
-      </span>
-    ) },
+    { accessorKey: 'items', header: '# Items' },
     { accessorKey: 'created', header: 'Created Date' },
   ];
 
-  const handleCardClick = (filter: string) => {
-    navigate(`/requests?filter=${filter}`);
-  };
-
-  const handleAddComment = () => {
-    if (selectedRequest && comment.trim()) {
-      woMaterialsService.addComment(selectedRequest.id, comment);
-      setComment('');
-      setSelectedRequest(null);
-      // Refresh dashboard data
-      const scopeId = 'welding-scope';
-      const data = woMaterialsService.getACDashboardData(scopeId);
-      setDashboardData(data);
-    }
-  };
-
-  if (!dashboardData) {
+  if (!scopeData) {
     return <div className="flex items-center justify-center h-64">Loading...</div>;
   }
 
@@ -82,10 +100,10 @@ const AreaCoordinatorDashboardView: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="text-2xl font-semibold text-gray-900">
-        Dashboard: Welding Scope
+        My Scope Dashboard: Welding Scope
       </div>
 
-      {/* Health Summary Cards */}
+      {/* Summary & Control Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div 
           className="bg-white rounded-lg border border-amber-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
@@ -93,65 +111,87 @@ const AreaCoordinatorDashboardView: React.FC = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm text-gray-600 font-medium mb-2">⚠️ Exceptions in My Scope</div>
-              <div className="text-3xl font-bold text-amber-600">{dashboardData.exceptionsCount}</div>
+              <div className="text-sm text-gray-600 font-medium mb-2">⚠️ My Scope's Exceptions</div>
+              <div className="text-3xl font-bold text-amber-600">{scopeData.exceptionsCount}</div>
             </div>
             <div className="text-amber-500 text-2xl">⚠️</div>
           </div>
         </div>
 
-        <div 
-          className="bg-white rounded-lg border border-red-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => handleCardClick('overdue')}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-gray-600 font-medium mb-2">🚩 Overdue Requests</div>
-              <div className="text-3xl font-bold text-red-600">{dashboardData.overdueCount}</div>
-            </div>
-            <div className="text-red-500 text-2xl">🚩</div>
+        <div className="bg-white rounded-lg border border-blue-200 p-6">
+          <div className="text-sm text-gray-600 font-medium mb-2">📊 My Scope's Queue Position</div>
+          <div className="space-y-2 text-sm">
+            <div>You have {scopeData.queuePosition.totalInQueue} requests in the Qube queue.</div>
+            <div>Highest Priority Item: <span className="font-semibold">{scopeData.queuePosition.highestPriority.id}</span> at position #{scopeData.queuePosition.highestPriority.position}</div>
+            <div>Next Item to be Picked: <span className="font-semibold">{scopeData.queuePosition.nextToPick.id}</span> at position #{scopeData.queuePosition.nextToPick.position}</div>
           </div>
         </div>
 
         <div 
-          className="bg-white rounded-lg border border-green-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => handleCardClick('delivered-today')}
+          className="bg-white rounded-lg border border-purple-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
+          onClick={handleLockedMaterialsClick}
         >
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm text-gray-600 font-medium mb-2">✅ Delivered Today</div>
-              <div className="text-3xl font-bold text-green-600">{dashboardData.deliveredTodayCount}</div>
+              <div className="text-sm text-gray-600 font-medium mb-2">🔒 Locked Materials</div>
+              <div className="text-3xl font-bold text-purple-600">{scopeData.lockedMaterialsCount}</div>
             </div>
-            <div className="text-green-500 text-2xl">✅</div>
+            <div className="text-purple-500 text-2xl">🔒</div>
           </div>
         </div>
       </div>
 
-      {/* Requests Requiring Action */}
+      {/* Tabbed Interface */}
       <div className="bg-white rounded-lg shadow-sm">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Requests Requiring Action</h3>
-          <p className="text-sm text-gray-600 mt-1">
-            Smart-filtered list of requests that need your attention
-          </p>
-        </div>
-        
-        <div className="p-6">
-          <SmartTable
-            tableId="ac-action-queue"
-            data={dashboardData.actionQueue}
-            columns={columns}
-            onRowClick={(row) => setSelectedRequest(row)}
-          />
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-8 px-6">
+            <button
+              onClick={() => setActiveTab('priority')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'priority'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              🚀 AC Priority Queue
+            </button>
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'all'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              All Scope Requests
+            </button>
+          </nav>
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-          <button 
-            className="text-blue-600 hover:text-blue-800 underline"
-            onClick={() => navigate('/requests')}
-          >
-            Go to Full "Material Requests" Dashboard...
-          </button>
+        <div className="p-6">
+          {activeTab === 'priority' ? (
+            <div>
+              <div className="mb-4 text-sm text-gray-600">
+                Drag and drop rows to reorder priority within your scope. MC priorities still take precedence globally.
+              </div>
+              <SmartTable
+                tableId="ac-priority-queue"
+                data={scopeData.priorityQueue}
+                columns={priorityQueueColumns}
+                onRowClick={(row) => {
+                  const fullRequest = scopeData.allScopeRequests.find(r => r.id === row.id);
+                  if (fullRequest) setSelectedRequest(fullRequest);
+                }}
+              />
+            </div>
+          ) : (
+            <SmartTable
+              tableId="ac-all-requests"
+              data={scopeData.allScopeRequests}
+              columns={allRequestsColumns}
+              onRowClick={(row) => setSelectedRequest(row)}
+            />
+          )}
         </div>
       </div>
 
@@ -175,8 +215,8 @@ const AreaCoordinatorDashboardView: React.FC = () => {
                   <span className="ml-2">{selectedRequest.requestor}</span>
                 </div>
                 <div>
-                  <span className="font-medium text-gray-700">Issue:</span>
-                  <span className="ml-2">{selectedRequest.issue}</span>
+                  <span className="font-medium text-gray-700">Items:</span>
+                  <span className="ml-2">{selectedRequest.items}</span>
                 </div>
                 <div>
                   <span className="font-medium text-gray-700">Created:</span>
@@ -195,7 +235,7 @@ const AreaCoordinatorDashboardView: React.FC = () => {
               
               <section>
                 <div className="text-sm text-gray-600 font-medium mb-2">Line Items</div>
-                <div className="bg-gray-50 border border-gray-200 rounded p-3">4 items (mock)</div>
+                <div className="bg-gray-50 border border-gray-200 rounded p-3">{selectedRequest.items} items (mock)</div>
               </section>
               
               <section>
@@ -226,6 +266,52 @@ const AreaCoordinatorDashboardView: React.FC = () => {
                   </div>
                 </div>
               </section>
+
+              {selectedRequest.status === 'Submitted' && (
+                <section>
+                  <div className="text-sm text-gray-600 font-medium mb-2">Actions</div>
+                  <div className="flex gap-2">
+                    <button className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                      ✏️ Edit Request
+                    </button>
+                  </div>
+                </section>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Locked Materials Modal */}
+      {showLockedModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">🔒 Locked Materials</h3>
+              <button
+                onClick={() => setShowLockedModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="space-y-3">
+              {woMaterialsService.getLockedMaterials().map((lock, index) => (
+                <div key={index} className="border border-gray-200 rounded p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-medium text-gray-900">{lock.materialDescription}</div>
+                      <div className="text-sm text-gray-600 mt-1">{lock.comment}</div>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Locked by {lock.lockedBy}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
