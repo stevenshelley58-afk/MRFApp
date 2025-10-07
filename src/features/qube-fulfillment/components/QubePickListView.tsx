@@ -48,7 +48,7 @@ const QubePickListView: React.FC = () => {
   const handleRowClick = (r: PickRow) => {
     // Start picking (background) and navigate
     woMaterialsService.startPick(r.id);
-    alert(`Navigating to Picking page for ${r.id} (mock)`);
+    window.location.assign(`/picking?mrf=${encodeURIComponent(r.id)}`);
   };
 
   const handleSplit = (r: PickRow) => {

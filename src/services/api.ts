@@ -172,6 +172,31 @@ export class WOMaterialsService {
     // no-op return
     return { ok: true };
   }
+
+  // Picking page mock data and actions
+  getRequestItems(mrfId: string): Array<{
+    id: string; // line id
+    status: 'Open'|'Picked'|'Exception';
+    qty: number;
+    description: string;
+    itemNumber: string;
+    location: string;
+    packNumber?: string | null;
+  }> {
+    // Simple static lines for demo
+    return [
+      { id:`${mrfId}-L1`, status:'Open', qty:10, description:'10-inch Steel Pipe, 20ft', itemNumber:'PIPE-STEEL-10', location:'Yard A', packNumber:'PACK001' },
+      { id:`${mrfId}-L2`, status:'Open', qty:2, description:'10-inch Gate Valve, Class 300', itemNumber:'VALVE-GATE-10', location:'WH1 Aisle 3', packNumber:'PACK001' },
+      { id:`${mrfId}-L3`, status:'Open', qty:25, description:'10-inch Spiral Wound Gasket', itemNumber:'GASKET-SPIRAL-10', location:'WH1 Bin 7' },
+      { id:`${mrfId}-L4`, status:'Open', qty:10, description:'Welding Rod E7018, 50lb box', itemNumber:'WELD-ROD-E7018', location:'WH1 Bin 1' },
+    ];
+  }
+
+  markAllPicked(mrfId: string) { return { ok: true }; }
+  markLinePicked(lineId: string) { return { ok: true }; }
+  logPartialPick(lineId: string, qtyPicked: number) { return { ok: true }; }
+  flagException(lineId: string, reason: string, comment?: string) { return { ok: true }; }
+  stageComplete(mrfId: string) { return { ok: true }; }
 }
 
 // Export singleton instance
