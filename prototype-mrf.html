@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MRF Prototype - Universal Visibility, Role-Based Action</title>
+  <style>
+    :root{
+      --primary:#2563eb; --primary-600:#1d4ed8; --blue-100:#dbeafe; --blue-50:#eff6ff;
+      --gray-900:#111827; --gray-800:#1f2937; --gray-700:#374151; --gray-600:#4b5563;
+      --gray-500:#6b7280; --gray-400:#9ca3af; --gray-300:#d1d5db; --gray-200:#e5e7eb;
+      --gray-100:#f3f4f6; --gray-50:#f9fafb; --white:#fff;
+      --green:#10b981; --yellow:#f59e0b; --red:#ef4444; --purple:#8b5cf6; --cyan:#0891b2;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--gray-50);color:var(--gray-900)}
+    .app{display:flex;min-height:100vh}
+    /* Sidebar */
+    .sidebar{width:240px;background:var(--gray-100);border-right:1px solid var(--gray-200);display:flex;flex-direction:column}
+    .hub-title{padding:20px 16px;font-weight:700;color:var(--gray-800)}
+    .nav{padding:8px}
+    .nav-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--gray-700);cursor:pointer;border:0;background:transparent;width:100%;text-align:left}
+    .nav-btn:hover{background:var(--gray-200)}
+    .nav-btn.active{background:var(--blue-50);color:var(--primary);border:1px solid var(--blue-100)}
+    .spacer{flex:1}
+    .switch-user{padding:12px;border-top:1px solid var(--gray-200)}
+    .switch-menu{position:relative}
+    .switch-trigger{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--gray-300);background:var(--white);cursor:pointer}
+    .menu{position:absolute;left:0;right:0;top:44px;background:var(--white);border:1px solid var(--gray-200);border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,.08);display:none;z-index:20}
+    .menu.open{display:block}
+    .menu-item{padding:10px 12px;cursor:pointer}
+    .menu-item:hover{background:var(--gray-50)}
+    /* Main */
+    .main{flex:1;display:flex;flex-direction:column}
+    .header{height:64px;background:var(--white);border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--primary)}
+    .profile{display:flex;align-items:center;gap:10px;color:var(--gray-700)}
+    .role{font-size:12px;color:var(--gray-500)}
+    .content{padding:20px}
+    /* Cards */
+    .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+    .card{background:var(--white);border:1px solid var(--gray-200);border-radius:12px;padding:16px;display:flex;align-items:center;justify-content:space-between}
+    .card .title{font-size:12px;color:var(--gray-600)}
+    .card .value{font-size:28px;font-weight:800;color:var(--gray-900)}
+    /* Search */
+    .search{margin-top:16px;background:var(--white);border:1px solid var(--gray-200);border-radius:12px;padding:16px;display:flex;gap:10px}
+    .search input{flex:1;border:1px solid var(--gray-300);border-radius:10px;padding:10px 12px}
+    .btn{background:var(--primary);color:var(--white);border:0;border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer}
+    .btn:hover{background:var(--primary-600)}
+    /* Table */
+    .table-wrap{margin-top:16px;background:var(--white);border:1px solid var(--gray-200);border-radius:12px;overflow:auto}
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    thead th{position:sticky;top:0;background:var(--gray-100);color:var(--gray-700);font-size:12px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--gray-200);padding:10px;text-align:left}
+    tbody td{padding:12px;border-bottom:1px solid var(--gray-200);font-size:14px;color:var(--gray-800)}
+    tbody tr:hover{background:var(--gray-50)}
+    .pill{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600}
+    .pill.delivered{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
+    .pill.picking{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+    .pill.closed{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb}
+    .pill.notreq{background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe}
+    .pill a{color:inherit;text-decoration:underline;margin-left:6px}
+    /* Placeholders */
+    .placeholder{background:var(--white);border:1px solid var(--gray-200);border-radius:12px;padding:40px;text-align:center;color:var(--gray-600);font-size:22px;font-weight:700;margin-top:16px}
+    /* Role-hidden */
+    .hidden{display:none !important}
+    @media (max-width:1100px){.cards{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:700px){.sidebar{width:72px}.nav-btn span{display:none}.hub-title{display:none}.cards{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="hub-title">Hub</div>
+      <div class="nav" id="hubNav">
+        <button class="nav-btn active" data-app="requestor"><span>🧑‍💼</span><span>Requestor</span></button>
+        <button class="nav-btn" data-app="qube"><span>📦</span><span>Qube</span></button>
+        <button class="nav-btn" data-app="ac"><span>🗂️</span><span>AC</span></button>
+        <button class="nav-btn" data-app="mc"><span>🏷️</span><span>MC</span></button>
+      </div>
+      <div class="spacer"></div>
+      <div class="switch-user">
+        <div class="switch-menu">
+          <button class="switch-trigger" id="switchBtn">Switch User ▾</button>
+          <div class="menu" id="switchMenu">
+            <div class="menu-item" data-user="requestor">Sign in as Requestor (Jane Doe)</div>
+            <div class="menu-item" data-user="ac">Sign in as Area Coordinator (Steve)</div>
+            <div class="menu-item" data-user="qube">Sign in as Qube User (JJ)</div>
+            <div class="menu-item" data-user="mc">Sign in as Material Coordinator (Corey)</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="header">
+        <div class="brand">Aufait UX</div>
+        <div class="profile"><div>
+          <div id="profileName">Jane Doe</div>
+          <div class="role" id="profileRole">Requestor</div>
+        </div></div>
+      </header>
+
+      <div class="content">
+        <!-- Requestor View -->
+        <section id="view-requestor">
+          <div class="cards">
+            <div class="card">
+              <div>
+                <div class="title">My Open Requests</div>
+                <div class="value">12</div>
+              </div>
+              <div>⏱️</div>
+            </div>
+            <div class="card">
+              <div>
+                <div class="title">My Delivered Requests</div>
+                <div class="value">35</div>
+              </div>
+              <div>✅</div>
+            </div>
+          </div>
+
+          <div class="search">
+            <input id="searchInput" value="WO12345" />
+            <button class="btn" id="searchBtn">Search</button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:48px"><input type="checkbox" id="checkAll" /></th>
+                  <th>MRF Status</th>
+                  <th>Line #</th>
+                  <th>Item Number</th>
+                  <th>Description</th>
+                  <th>Pack #</th>
+                  <th>Location</th>
+                  <th>WO Qty</th>
+                  <th>Requested</th>
+                  <th>Available</th>
+                </tr>
+              </thead>
+              <tbody id="gridBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Placeholders for other roles -->
+        <section id="view-qube" class="hidden">
+          <div class="placeholder">Qube User Dashboard</div>
+        </section>
+        <section id="view-ac" class="hidden">
+          <div class="placeholder">Area Coordinator Dashboard</div>
+        </section>
+        <section id="view-mc" class="hidden">
+          <div class="placeholder">Material Coordinator Control Panel</div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Data for Requestor grid
+    const rows = [
+      { status:'Delivered', id:'2024001', line:'001', item:'PIPE-STEEL-10', desc:'10-inch Steel Pipe, 20ft', pack:'PACK001', loc:'Yard A', wo:50, req:10, avail:40 },
+      { status:'Picking', id:'2024002', line:'002', item:'VALVE-GATE-10', desc:'10-inch Gate Valve, Class 300', pack:'PACK001', loc:'Warehouse 1, Aisle 3', wo:5, req:2, avail:3 },
+      { status:'Closed', id:'2024004', line:'003', item:'GASKET-SPIRAL-10', desc:'10-inch Spiral Wound Gasket', pack:'N/A', loc:'Warehouse 1, Bin 7', wo:100, req:25, avail:75 },
+      { status:'Not Requested', id:null, line:'004', item:'WELD-ROD-E7018', desc:'Welding Rod E7018, 50lb box', pack:'N/A', loc:'Warehouse 1, Bin 1', wo:10, req:0, avail:10 },
+    ];
+
+    const gridBody = document.getElementById('gridBody');
+    const checkAll = document.getElementById('checkAll');
+
+    function pillClass(status){
+      if(status==='Delivered') return 'pill delivered';
+      if(status==='Picking') return 'pill picking';
+      if(status==='Closed') return 'pill closed';
+      if(status==='Not Requested') return 'pill notreq';
+      return 'pill';
+    }
+
+    function renderRows(){
+      gridBody.innerHTML = rows.map((r,i)=>{
+        const statusHtml = r.id
+          ? `<span class="${pillClass(r.status)}">${r.status} <a href="#" data-mrf="${r.id}">(${r.id})</a></span>`
+          : `<span class="${pillClass(r.status)}">${r.status}</span>`;
+        return `<tr>
+          <td><input type="checkbox" data-row="${i}" /></td>
+          <td>${statusHtml}</td>
+          <td>${r.line}</td>
+          <td>${r.item}</td>
+          <td>${r.desc}</td>
+          <td>${r.pack}</td>
+          <td>${r.loc}</td>
+          <td>${r.wo}</td>
+          <td>${r.req}</td>
+          <td>${r.avail}</td>
+        </tr>`;
+      }).join('');
+    }
+    renderRows();
+
+    // Clickable MRF id opens basic alert (placeholder for side panel)
+    gridBody.addEventListener('click', (e)=>{
+      const a = e.target.closest('a[data-mrf]');
+      if(a){ e.preventDefault(); alert('Open Material Request '+a.dataset.mrf); }
+    });
+
+    // Check all
+    checkAll.addEventListener('change', (e)=>{
+      gridBody.querySelectorAll('input[type="checkbox"]').forEach(cb=> cb.checked = e.target.checked);
+    });
+
+    // User Simulation
+    const users = {
+      requestor: { name:'Jane Doe', role:'Requestor', sidebar:['WO Materials','Material Requests'] },
+      ac: { name:'Steve', role:'Area Coordinator', sidebar:['Material Requests','Exceptions'] },
+      qube: { name:'JJ', role:'Qube User', sidebar:['Pick Queue','Pick Lists'] },
+      mc: { name:'Corey', role:'Material Coordinator', sidebar:['Control Panel','Exceptions','Pick Queue'] },
+    };
+
+    const profileName = document.getElementById('profileName');
+    const profileRole = document.getElementById('profileRole');
+    const switchBtn = document.getElementById('switchBtn');
+    const switchMenu = document.getElementById('switchMenu');
+    const hubNav = document.getElementById('hubNav');
+
+    switchBtn.addEventListener('click', ()=> switchMenu.classList.toggle('open'));
+    document.addEventListener('click', (e)=>{
+      if(!e.target.closest('.switch-menu')) switchMenu.classList.remove('open');
+    });
+    switchMenu.addEventListener('click', (e)=>{
+      const item = e.target.closest('.menu-item');
+      if(!item) return; switchMenu.classList.remove('open');
+      const key = item.dataset.user; setUser(key);
+      hubNav.querySelectorAll('.nav-btn').forEach(b=> b.classList.toggle('active', b.dataset.app===key));
+    });
+
+    hubNav.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.nav-btn');
+      if(!btn) return; setUser(btn.dataset.app);
+      hubNav.querySelectorAll('.nav-btn').forEach(b=> b.classList.toggle('active', b===btn));
+    });
+
+    function setUser(key){
+      const u = users[key]; if(!u) return;
+      profileName.textContent = u.name; profileRole.textContent = u.role;
+      // Toggle views
+      document.getElementById('view-requestor').classList.toggle('hidden', key!=='requestor');
+      document.getElementById('view-qube').classList.toggle('hidden', key!=='qube');
+      document.getElementById('view-ac').classList.toggle('hidden', key!=='ac');
+      document.getElementById('view-mc').classList.toggle('hidden', key!=='mc');
+    }
+
+    // Default user
+    setUser('requestor');
+  </script>
+</body>
+</html>
+
+
